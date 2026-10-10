@@ -23,8 +23,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "secondhand": {
-      "command": "node",
-      "args": ["/full/path/to/secondhand-mcp-docidenv/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "github:martinchooxp/secondhand-mcp-docidenv"],
       "env": {
         "EBAY_CLIENT_ID": "your-ebay-client-id",
         "EBAY_CLIENT_SECRET": "your-ebay-client-secret",
@@ -34,8 +34,6 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   }
 }
 ```
-
-Replace `/full/path/to/secondhand-mcp-docidenv` with the actual path to your cloned repository.
 
 ### Claude Code
 
@@ -45,8 +43,8 @@ Add to `~/.claude/.mcp.json`:
 {
   "mcpServers": {
     "secondhand": {
-      "command": "node",
-      "args": ["/full/path/to/secondhand-mcp-docidenv/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "github:martinchooxp/secondhand-mcp-docidenv"],
       "env": {
         "EBAY_CLIENT_ID": "your-ebay-client-id",
         "EBAY_CLIENT_SECRET": "your-ebay-client-secret",
@@ -57,28 +55,7 @@ Add to `~/.claude/.mcp.json`:
 }
 ```
 
-Replace `/full/path/to/secondhand-mcp-docidenv` with the actual path to your cloned repository.
-
-### Installation Steps
-
-1. Clone this repository:
-```bash
-git clone https://github.com/martinchooxp/secondhand-mcp-docidenv.git
-cd secondhand-mcp-docidenv
-```
-
-2. Install dependencies and build:
-```bash
-npm install
-npm run build
-```
-
-3. Get the full path to the repo:
-```bash
-pwd
-```
-
-4. Update your Claude Desktop or Claude Code config (see above) with that path.
+This will automatically download and run the latest version directly from the GitHub repository.
 
 ### Depop & Poshmark / Chrome Requirement
 

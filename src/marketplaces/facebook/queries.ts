@@ -1,9 +1,28 @@
 import { LocationCoordinates } from '../../types.js';
 
-export const LOCATION_DOC_ID = '5585904654783609';
-export const SEARCH_DOC_ID = '27517490627932547';
-export const DETAIL_PHOTOS_DOC_ID = '10059604367394414';
-export const DETAIL_INFO_DOC_ID = '26090240497332612';
+const DOC_ID_ENV_NAMES = {
+  LOCATION: 'FACEBOOK_LOCATION_DOC_ID',
+  SEARCH: 'FACEBOOK_SEARCH_DOC_ID',
+  DETAIL_PHOTOS: 'FACEBOOK_DETAIL_PHOTOS_DOC_ID',
+  DETAIL_INFO: 'FACEBOOK_DETAIL_INFO_DOC_ID',
+} as const;
+
+const DEFAULT_DOC_IDS = {
+  LOCATION: '5585904654783609',
+  SEARCH: '27517490627932547',
+  DETAIL_PHOTOS: '10059604367394414',
+  DETAIL_INFO: '26090240497332612',
+} as const;
+
+function getDocId(envName: string, fallback: string): string {
+  const value = process.env[envName];
+  return value && value.trim() ? value.trim() : fallback;
+}
+
+export const LOCATION_DOC_ID = getDocId(DOC_ID_ENV_NAMES.LOCATION, DEFAULT_DOC_IDS.LOCATION);
+export const SEARCH_DOC_ID = getDocId(DOC_ID_ENV_NAMES.SEARCH, DEFAULT_DOC_IDS.SEARCH);
+export const DETAIL_PHOTOS_DOC_ID = getDocId(DOC_ID_ENV_NAMES.DETAIL_PHOTOS, DEFAULT_DOC_IDS.DETAIL_PHOTOS);
+export const DETAIL_INFO_DOC_ID = getDocId(DOC_ID_ENV_NAMES.DETAIL_INFO, DEFAULT_DOC_IDS.DETAIL_INFO);
 
 export const DEFAULT_RADIUS_MILES = 25;
 const MAX_RADIUS_MILES = 500;

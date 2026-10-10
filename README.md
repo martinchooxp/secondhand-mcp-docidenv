@@ -1,24 +1,8 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/jlsookiki-secondhand-mcp-badge.png)](https://mseep.ai/app/jlsookiki-secondhand-mcp)
-[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/3c5664f0-af0e-47f3-8027-de49f25cad5c)
-
 # Secondhand MCP
 
 A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that lets AI assistants search secondhand marketplaces. Search Facebook Marketplace, eBay, Depop, and Poshmark for used and refurbished items — with filters, photos, and full listing details.
 
 Works with Claude Desktop, Claude Code, Cursor, and other clients that run MCP servers locally.
-
-> [!TIP]
-> **Using ChatGPT? This one won't work there.**
->
-> It runs on your computer, so it only works where your computer is — Claude Desktop, Claude Code, Cursor. [Secondhand MCP Cloud](https://secondhandmcp.com) is the same search, always on, so while you travel or from your phone. [Try it free](https://secondhandmcp.com).
-
-| | This repo | [Cloud](https://secondhandmcp.com) |
-|---|---|---|
-| Claude Desktop, Code, Cursor | ✅ | ✅ |
-| ChatGPT, Claude, and other assistants | — | ✅ |
-| Searching from your phone | — | ✅ |
-| Chrome running in the background | needed | not needed |
-| Price | free, forever | free tier, then $4.99 |
 
 ## Supported Marketplaces
 
@@ -39,8 +23,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "secondhand": {
-      "command": "npx",
-      "args": ["-y", "secondhand-mcp"],
+      "command": "node",
+      "args": ["/full/path/to/secondhand-mcp-docidenv/dist/index.js"],
       "env": {
         "EBAY_CLIENT_ID": "your-ebay-client-id",
         "EBAY_CLIENT_SECRET": "your-ebay-client-secret",
@@ -50,6 +34,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   }
 }
 ```
+
+Replace `/full/path/to/secondhand-mcp-docidenv` with the actual path to your cloned repository.
 
 ### Claude Code
 
@@ -59,8 +45,8 @@ Add to `~/.claude/.mcp.json`:
 {
   "mcpServers": {
     "secondhand": {
-      "command": "npx",
-      "args": ["-y", "secondhand-mcp"],
+      "command": "node",
+      "args": ["/full/path/to/secondhand-mcp-docidenv/dist/index.js"],
       "env": {
         "EBAY_CLIENT_ID": "your-ebay-client-id",
         "EBAY_CLIENT_SECRET": "your-ebay-client-secret",
@@ -71,7 +57,28 @@ Add to `~/.claude/.mcp.json`:
 }
 ```
 
-eBay, Depop, and Poshmark are all optional — if eBay API keys are missing or Chrome isn't installed, those marketplaces are automatically disabled and the rest still work.
+Replace `/full/path/to/secondhand-mcp-docidenv` with the actual path to your cloned repository.
+
+### Installation Steps
+
+1. Clone this repository:
+```bash
+git clone https://github.com/martinchooxp/secondhand-mcp-docidenv.git
+cd secondhand-mcp-docidenv
+```
+
+2. Install dependencies and build:
+```bash
+npm install
+npm run build
+```
+
+3. Get the full path to the repo:
+```bash
+pwd
+```
+
+4. Update your Claude Desktop or Claude Code config (see above) with that path.
 
 ### Depop & Poshmark / Chrome Requirement
 
@@ -238,7 +245,9 @@ Useful for research-style clients that expect these standard tool names; for fil
 
 **Poshmark** — Uses a headless browser to search listings with support for condition, size, color, sort, and price filters. Poshmark is not location-based — all items ship nationally.
 
-## Development / Local Install
+## Development
+
+### Getting Started
 
 ```bash
 git clone https://github.com/martinchooxp/secondhand-mcp-docidenv.git
@@ -261,28 +270,13 @@ Or in development mode (with live reload):
 npm run dev
 ```
 
-### Using a Local Checkout with MCP Clients
+### Testing
 
-If you want Claude Desktop or another MCP client to use your local repo instead of the npm package:
-
-**Claude Desktop** — Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "secondhand": {
-      "command": "node",
-      "args": ["/full/path/to/secondhand-mcp-docidenv/dist/index.js"],
-      "env": {
-        "EBAY_CLIENT_ID": "your-ebay-client-id",
-        "EBAY_CLIENT_SECRET": "your-ebay-client-secret"
-      }
-    }
-  }
-}
+```bash
+npm test
+npm run test:watch
+npm run test:coverage
 ```
-
-Make sure to run `npm run build` first to generate the `dist` directory.
 
 ### Adding a Marketplace
 

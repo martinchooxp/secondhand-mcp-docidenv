@@ -3,14 +3,14 @@
 
 # Secondhand MCP
 
-A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that lets AI assistants search secondhand marketplaces. Search Facebook Marketplace, eBay, Depop, and Poshmark for used and secondhand items — filter by price, category, condition, size, and color, then get full listing details with photos, descriptions, and seller info.
+A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that lets AI assistants search secondhand marketplaces. Search Facebook Marketplace, eBay, Depop, and Poshmark for used and refurbished items — with filters, photos, and full listing details.
 
 Works with Claude Desktop, Claude Code, Cursor, and other clients that run MCP servers locally.
 
 > [!TIP]
 > **Using ChatGPT? This one won't work there.**
 >
-> It runs on your computer, so it only works where your computer is — Claude Desktop, Claude Code, Cursor. [Secondhand MCP Cloud](https://secondhandmcp.com) is the same search, always on, so whichever assistant you actually use can reach it. Free tier, no card.
+> It runs on your computer, so it only works where your computer is — Claude Desktop, Claude Code, Cursor. [Secondhand MCP Cloud](https://secondhandmcp.com) is the same search, always on, so while you travel or from your phone. [Try it free](https://secondhandmcp.com).
 
 | | This repo | [Cloud](https://secondhandmcp.com) |
 |---|---|---|
@@ -75,9 +75,9 @@ eBay, Depop, and Poshmark are all optional — if eBay API keys are missing or C
 
 ### Depop & Poshmark / Chrome Requirement
 
-Depop and Poshmark require a headless browser. If **Google Chrome or Chromium** is installed on your system, both are automatically enabled — no config needed. If Chrome isn't found, they are silently skipped.
+Depop and Poshmark require a headless browser. If **Google Chrome or Chromium** is installed on your system, both are automatically enabled — no config needed. If Chrome isn't found, they are silently disabled and Facebook + eBay continue to work.
 
-On macOS, the first time you search Depop or Poshmark, you may see a system prompt asking to allow Node.js to control Chrome. This is expected — puppeteer needs to launch Chrome in headless mode. Allow it once and it won't ask again.
+On macOS, the first time you search Depop or Poshmark, you may see a system prompt asking to allow Node.js to control Chrome. This is expected — puppeteer needs to launch Chrome in headless mode. Grant it and you're set.
 
 The browser runs invisibly in the background and only launches when you actually search Depop or Poshmark.
 
@@ -132,6 +132,33 @@ Common values:
 
 The full list is available in the [eBay API docs](https://developer.ebay.com/api-docs/static/rest-request-components.html#marketpl).
 
+### Facebook GraphQL doc_id Overrides
+
+Facebook occasionally changes its internal GraphQL `doc_id` values. If Facebook Marketplace search or detail fetch stops working, you can override the built-in IDs with environment variables:
+
+```json
+{
+  "env": {
+    "FACEBOOK_SEARCH_DOC_ID": "27517490627932547",
+    "FACEBOOK_LOCATION_DOC_ID": "5585904654783609",
+    "FACEBOOK_DETAIL_PHOTOS_DOC_ID": "10059604367394414",
+    "FACEBOOK_DETAIL_INFO_DOC_ID": "26090240497332612"
+  }
+}
+```
+
+If unset, the server uses the current built-in defaults. This allows you to keep the repo working without editing code when Facebook updates their internal API.
+
+**Finding updated doc_id values:**
+
+1. Open your browser DevTools and navigate to facebook.com/marketplace
+2. Open the Console tab
+3. Paste the script from `scripts/capture-detail-docid.js` and press Enter
+4. Click on any listing to view its detail page
+5. Watch the console — it will log all GraphQL requests with their `doc_id` values
+6. Look for the ones marked as `[MATCH]` (with DESCRIPTION, PHOTOS, CONDITION)
+7. Copy the `doc_id` values and set them as environment variables above
+
 ## Tools
 
 ### `search_marketplace`
@@ -150,8 +177,8 @@ Search for items across marketplaces.
 | `showSold` | No | `false` | Include sold items (Facebook only) |
 | `includeImages` | No | `false` | Include image URLs in output |
 | `sort` | No | `relevance` | Sort order (Depop, Poshmark): `relevance`, `newest`, `most_popular`, `price_low_to_high`, `price_high_to_low` |
-| `condition` | No | | Item condition. eBay: `new`, `like_new`, `good`, `fair`. Depop: `new`, `like_new`, `excellent`, `good`, `fair`, `used`. Poshmark: `new` (NWT), `like_new` (NWOT), `good`, `fair` |
-| `category` | No | | Product category. Depop: `tops`, `bottoms`, `dresses`, `coats-jackets`, `footwear`, `accessories`, `bags`, `jewellery`, `activewear`, `swimwear`. Poshmark: `Jackets_&_Coats`, `Dresses`, `Shoes`, `Accessories`, etc. |
+| `condition` | No | | Item condition. eBay: `new`, `like_new`, `good`, `fair`. Depop: `new`, `like_new`, `excellent`, `good`, `fair`, `used`. Poshmark: `new` (NWT), `like_new` (NWOT), `good`, `fair`, `poor` |
+| `category` | No | | Product category. Depop: `tops`, `bottoms`, `dresses`, `coats-jackets`, `footwear`, `accessories`, `bags`, `jewellery`, `activewear`, `swimwear`. Poshmark: `Jackets_&_Coats`, `Dresses`, `Tops_&_Blouses`, `Pants`, `Shoes`, `Accessories`, `Sweaters`, etc. |
 | `brand` | No | | Brand filter (Poshmark only): e.g. `"Nike"`, `"Levi's"`, `"Gucci"` |
 | `department` | No | | Department filter (Poshmark only): `Women`, `Men`, `Kids` |
 | `sizes` | No | | Size filter (Depop, Poshmark): e.g. `["S", "M", "L"]` or `["US 9", "US 10"]` |
@@ -203,22 +230,59 @@ Useful for research-style clients that expect these standard tool names; for fil
 
 ## How It Works
 
-**Facebook Marketplace** — Searches listings by location, radius, price, and query. Resolves city names to coordinates. No login or browser needed. Facebook serves non-browser callers a gated version of its search API from time to time (a single result with more pages behind it, or stubs with no listing inside); when that happens the server reads the logged-out search page instead, which still carries a full first page of results.
+**Facebook Marketplace** — Searches listings by location, radius, price, and query. Resolves city names to coordinates. No login or browser needed. Facebook serves non-browser callers a gated version of the search API, so the server falls back to scraping the public search page when needed.
 
-**eBay** — Uses the official eBay Browse API with OAuth 2.0 client credentials. Tokens are cached and auto-refreshed. The target regional marketplace is controlled by `EBAY_MARKETPLACE_ID` (default: `EBAY_US`).
+**eBay** — Uses the official eBay Browse API with OAuth 2.0 client credentials. Tokens are cached and auto-refreshed. The target regional marketplace is controlled by `EBAY_MARKETPLACE_ID` (defaults to US).
 
 **Depop** — Uses a headless browser to search listings with support for category, condition, size, and color filters. The browser instance is shared across requests.
 
 **Poshmark** — Uses a headless browser to search listings with support for condition, size, color, sort, and price filters. Poshmark is not location-based — all items ship nationally.
 
-## Development
+## Development / Local Install
 
 ```bash
-git clone https://github.com/jlsookiki/secondhand-mcp.git
-cd secondhand-mcp
+git clone https://github.com/martinchooxp/secondhand-mcp-docidenv.git
+cd secondhand-mcp-docidenv
 npm install
 npm run build
 ```
+
+### Running Locally
+
+To run the server locally from this repo checkout:
+
+```bash
+npm run start
+```
+
+Or in development mode (with live reload):
+
+```bash
+npm run dev
+```
+
+### Using a Local Checkout with MCP Clients
+
+If you want Claude Desktop or another MCP client to use your local repo instead of the npm package:
+
+**Claude Desktop** — Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "secondhand": {
+      "command": "node",
+      "args": ["/full/path/to/secondhand-mcp-docidenv/dist/index.js"],
+      "env": {
+        "EBAY_CLIENT_ID": "your-ebay-client-id",
+        "EBAY_CLIENT_SECRET": "your-ebay-client-secret"
+      }
+    }
+  }
+}
+```
+
+Make sure to run `npm run build` first to generate the `dist` directory.
 
 ### Adding a Marketplace
 
@@ -228,7 +292,7 @@ npm run build
 
 ## Limitations
 
-- **Facebook**: May break if Facebook changes their frontend
+- **Facebook**: May break if Facebook changes their frontend or GraphQL schema (use env vars to override doc_id values)
 - **eBay**: Requires developer API keys (free tier available)
 - **Depop**: Requires Chrome/Chromium installed; slower than Facebook/eBay (~5s per search)
 - **Poshmark**: Requires Chrome/Chromium installed; no official API so relies on page scraping
